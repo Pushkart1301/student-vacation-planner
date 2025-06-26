@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Head -->
+<head>
+  <title>Lecture Mapper</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<!-- Body -->
+<body>
+  <div class="container mx-auto p-4">
+    <h2 class="text-2xl font-bold mb-4">🗓️ Map Your Weekly Lecture Schedule</h2>
+    <form id="schedule-form">
+      <table class="table-auto w-full mb-6 border">
+        <thead>
+          <tr>
+            <th class="border px-4 py-2">Time</th>
+            <th class="border px-4 py-2">Monday</th>
+            <th class="border px-4 py-2">Tuesday</th>
+            <th class="border px-4 py-2">Wednesday</th>
+            <th class="border px-4 py-2">Thursday</th>
+            <th class="border px-4 py-2">Friday</th>
+          </tr>
+        </thead>
+        <tbody id="schedule-body">
+          <!-- Rows will be inserted here by JS -->
+        </tbody>
+      </table>
+      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">💾 Save Schedule</button>
+    </form>
+  </div>
+
+  <script>
+    const timeSlots = [
+      "10:45 - 11:45",
+      "11:45 - 12:45",
+      "12:45 - 1:45",
+      "1:45 - 2:45",
+      "2:45 - 3:30",
+      "3:30 - 4:30"
+    ];
+    const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+    const createDropdown = (day, time, subjects) => {
+      const select = document.createElement("select");
+      select.name = `schedule[${day}][${time}]`;
+      select.className = "border rounded px-2 py-1";
+
+      const emptyOption = document.createElement("option");
+      emptyOption.value = "";
+      emptyOption.text = "-- Select --";
+      select.appendChild(emptyOption);
+
+      subjects.forEach(sub => {
+        const opt = document.createElement("option");
+        opt.value = sub;
+        opt.text = sub;
+        select.appendChild(opt);
+      });
+
+      return select;
+    };
+
+    fetch("/get-selected-subjects")
+      .then(res => res.json())
+      .then(data => {
+        const subjects = data.selected || [];
+        const tbody = document.getElementById("schedule-body");
+
+        timeSlots.forEach(time => {
+          const row = document.createElement("tr");
+
+          const timeCell = document.createElement("td");
+          timeCell.className = "border px-4 py-2 font-semibold";
+          timeCell.innerText = time;
+          row.appendChild(timeCell);
+
+          weekdays.forEach(day => {
+            const cell = document.createElement("td");
+            cell.className = "border px-4 py-2";
+            const select = createDropdown(day, time, subjects);
+            cell.appendChild(select);
+            row.appendChild(cell);
+          });
+
+          tbody.appendChild(row);
+        });
+      });
+
+    // Save logic
+    document.getElementById("schedule-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const schedule = {};
+
+      for (const [key, value] of formData.entries()) {
+        const match = key.match(/schedule\[(.+?)\]\[(.+?)\]/);
+        if (match) {
+          const day = match[1];
+          const time = match[2];
+          if (!schedule[day]) schedule[day] = {};
+          schedule[day][time] = value;
+        }
+      }
+
+      fetch("/save-lecture-schedule", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(schedule)
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert("Lecture schedule saved!");
+        })
+        .catch(err => console.error("Error:", err));
+    });
+  </script>
+</body>
+
+
+</html>

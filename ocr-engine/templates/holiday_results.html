@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Extracted Holidays</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f7fa;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 2rem;
+    }
+
+    .holiday-card {
+      border-left: 5px solid #007bff;
+      padding: 1rem;
+      background: #f9fbff;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .holiday-info {
+      flex: 1;
+    }
+
+    .holiday-info h3 {
+      margin: 0;
+      color: #007bff;
+    }
+
+    .holiday-info p {
+      margin: 0.3rem 0;
+      color: #444;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 0.6rem 1.2rem;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background: #0056b3;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📅 Extracted Holidays</h1>
+
+    {% for holiday in holidays %}
+    <div class="holiday-card">
+      <div class="holiday-info">
+        <h3>{{ holiday.event }}</h3>
+        <p><strong>Date:</strong> {{ holiday.date }} June</p>
+        <p><strong>Day:</strong> {{ holiday.weekday }}</p>
+      </div>
+    </div>
+    {% endfor %}
+
+    <a href="/" class="back-btn">← Back to Dashboard</a>
+  </div>
+</body>
+</html>

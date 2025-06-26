@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Select Subjects</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans p-6">
+  <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">📚 Select Your Subjects</h2>
+
+    <!-- Default Subjects -->
+    <div id="subject-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Add new subject -->
+    <div class="mt-6">
+      <h3 class="text-lg font-semibold mb-2">🎯 Customize Subjects</h3>
+      <div class="flex space-x-2">
+        <input id="new-subject" type="text" placeholder="Enter new subject" class="flex-1 border rounded-md p-2">
+        <button onclick="addSubject()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">➕ Add</button>
+      </div>
+    </div>
+
+    <!-- Save & Customize -->
+    <div class="mt-6 text-right flex justify-between">
+      <button onclick="saveSubjects()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+        ✅ Save and Continue
+      </button>
+      <button onclick="resetSubjects()" class="text-red-500 hover:text-red-700 text-sm underline">🗑️ Reset All</button>
+    </div>
+  </div>
+
+  <script>
+    let subjects = [];
+    const defaultSubjects = ["DBMS", "CN", "BAI", "MATHS", "PS-III", "EVS"];
+
+    function renderSubjects() {
+      const list = document.getElementById('subject-list');
+      list.innerHTML = '';
+      subjects.forEach((subj, i) => {
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between bg-gray-100 px-3 py-2 rounded";
+        item.innerHTML = `
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" checked class="form-checkbox h-5 w-5 text-blue-500" onchange="toggleSubject(${i})">
+            <span>${subj}</span>
+          </label>
+          <button onclick="deleteSubject(${i})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function addSubject() {
+      const input = document.getElementById('new-subject');
+      const val = input.value.trim();
+      if (val && !subjects.includes(val)) {
+        subjects.push(val);
+        input.value = '';
+        renderSubjects();
+      }
+    }
+
+    function deleteSubject(index) {
+      subjects.splice(index, 1);
+      renderSubjects();
+    }
+
+    function toggleSubject(index) {
+      // Optional: toggle logic if needed
+    }
+
+    function resetSubjects() {
+      subjects = [...defaultSubjects];
+      renderSubjects();
+    }
+
+    function saveSubjects() {
+      fetch('/save-subjects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected: subjects })
+      })
+      .then(res => res.json())
+      .then(data => alert("✅ Subjects saved!"))
+      .catch(err => alert("❌ Failed to save subjects"));
+    }
+
+    // Load saved subjects (optional via API)
+    window.onload = () => {
+      fetch('/get-selected-subjects')
+        .then(res => res.json())
+        .then(data => {
+          subjects = data.selected || [...defaultSubjects];
+          renderSubjects();
+        })
+        .catch(() => {
+          subjects = [...defaultSubjects];
+          renderSubjects();
+        });
+    };
+  </script>
+</body>
+</html>

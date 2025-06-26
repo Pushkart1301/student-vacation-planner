@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Attendance Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: Arial; background: #f5f7fa; }
+    .calendar-container { max-width: 900px; margin: auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 0 12px rgba(0,0,0,0.1); margin-top: 40px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; height: 60px; text-align: center; }
+    td.present { background-color: #d4edda; }
+    td.absent { background-color: #f8d7da; }
+    td.weekend { background-color: #f0f0f0; }
+    .stats { text-align: center; margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div class="calendar-container">
+  <div class="flex justify-between items-center bg-blue-600 text-white px-4 py-2 rounded">
+    <button onclick="changeMonth(-1)">&#8592;</button>
+    <h2 id="month-year" class="text-lg font-bold"></h2>
+    <button onclick="changeMonth(1)">&#8594;</button>
+  </div>
+  <table id="attendance-table"></table>
+  <div class="stats" id="attendance-stats"></div>
+</div>
+
+<!-- Modal -->
+<div id="lectureModal" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%);
+  background:white; padding:20px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.3); z-index:1000;">
+  <h3 class="font-bold">Mark Attendance for <span id="modalDateText"></span></h3>
+  <div id="lectureList" class="mt-3"></div>
+  <input type="hidden" id="selectedDate">
+  <button onclick="saveLectureAttendance()" class="bg-green-500 text-white px-4 py-1 rounded mt-2">✅ Save</button>
+  <button onclick="closeModal()" class="bg-red-500 text-white px-4 py-1 rounded mt-2">❌ Cancel</button>
+</div>
+
+<script>
+  let today = new Date();
+  let currentMonth = today.getMonth();
+  let currentYear = today.getFullYear();
+  let attendanceData = JSON.parse(localStorage.getItem("attendanceData")) || {};
+  const table = document.getElementById("attendance-table");
+  const monthYear = document.getElementById("month-year");
+  const stats = document.getElementById("attendance-stats");
+  const lectureSchedule = {{ lecture_schedule | tojson | safe }};
+
+  function renderCalendar(month, year) {
+    table.innerHTML = "";
+    monthYear.textContent = new Date(year, month).toLocaleString("default", { month: "long", year: "numeric" });
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let row = table.insertRow();
+    ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(d => {
+      let th = row.insertCell();
+      th.textContent = d;
+      th.style.fontWeight = "bold";
+    });
+
+    row = table.insertRow();
+    for (let i = 0; i < firstDay; i++) row.insertCell();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      if (row.cells.length === 7) row = table.insertRow();
+      const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const cell = row.insertCell();
+      cell.textContent = day;
+      cell.id = dateKey;
+
+      const weekday = new Date(year, month, day).toLocaleDateString('en-US', { weekday: 'long' });
+      if (weekday === "Saturday" || weekday === "Sunday") cell.classList.add("weekend");
+
+      cell.onclick = () => toggleStatus(dateKey);
+      updateCellUI(cell, dateKey);
+    }
+
+    calculateStats(month, year);
+  }
+
+  function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    renderCalendar(currentMonth, currentYear);
+  }
+
+  function toggleStatus(dateKey) {
+    const weekday = new Date(dateKey).toLocaleDateString('en-US', { weekday: 'long' });
+    const schedule = lectureSchedule[weekday];
+    if (!schedule || Object.values(schedule).every(sub => sub === "")) {
+      alert("No lectures scheduled.");
+      return;
+    }
+
+    document.getElementById("modalDateText").textContent = dateKey;
+    document.getElementById("selectedDate").value = dateKey;
+
+    const list = document.getElementById("lectureList");
+    list.innerHTML = "";
+
+    Object.entries(schedule).forEach(([slot, subject]) => {
+      if (!subject) return;
+      const prev = attendanceData[dateKey]?.[subject] || "";
+      list.innerHTML += `
+        <label>${slot} - ${subject}:
+          <select id="att-${subject}">
+            <option value="">--</option>
+            <option value="P" ${prev === "P" ? "selected" : ""}>P</option>
+            <option value="A" ${prev === "A" ? "selected" : ""}>A</option>
+          </select>
+        </label><br/>
+      `;
+    });
+
+    document.getElementById("lectureModal").style.display = "block";
+  }
+
+  function saveLectureAttendance() {
+    const dateKey = document.getElementById("selectedDate").value;
+    const weekday = new Date(dateKey).toLocaleDateString('en-US', { weekday: 'long' });
+    const schedule = lectureSchedule[weekday];
+
+    if (!attendanceData[dateKey]) attendanceData[dateKey] = {};
+    Object.entries(schedule).forEach(([_, subject]) => {
+      if (!subject) return;
+      const status = document.getElementById(`att-${subject}`).value;
+      if (status) {
+        attendanceData[dateKey][subject] = status;
+
+        fetch("/api/mark-attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date: dateKey, subject, status })
+        });
+      }
+    });
+
+    localStorage.setItem("attendanceData", JSON.stringify(attendanceData));
+    closeModal();
+    renderCalendar(currentMonth, currentYear);
+  }
+
+  function closeModal() {
+    document.getElementById("lectureModal").style.display = "none";
+  }
+
+  function updateCellUI(cell, dateKey) {
+    cell.classList.remove("present", "absent");
+    const subj = attendanceData[dateKey];
+    if (subj) {
+      const hasP = Object.values(subj).includes("P");
+      const hasA = Object.values(subj).includes("A");
+
+      if (hasP && hasA) {
+        cell.classList.add("present");
+        cell.innerHTML = `${cell.innerText.split("\n")[0]}<br>P/A`;
+      } else if (hasP) {
+        cell.classList.add("present");
+        cell.innerHTML = `${cell.innerText.split("\n")[0]}<br>P`;
+      } else if (hasA) {
+        cell.classList.add("absent");
+        cell.innerHTML = `${cell.innerText.split("\n")[0]}<br>A`;
+      }
+    }
+  }
+
+  function calculateStats(month, year) {
+    let present = 0, absent = 0, workingDays = 0;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const weekday = date.getDay();
+      if (weekday === 0 || weekday === 6) continue;
+      workingDays++;
+
+      const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const entries = Object.values(attendanceData[dateKey] || {});
+      if (entries.includes("P")) present++;
+      if (entries.includes("A")) absent++;
+    }
+
+    const percent = workingDays ? ((present / workingDays) * 100).toFixed(1) : 0;
+    stats.innerText = `Present: ${present}, Absent: ${absent}, Working Days: ${workingDays}, Attendance: ${percent}%`;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    renderCalendar(currentMonth, currentYear);
+  });
+</script>
+
+</body>
+</html>

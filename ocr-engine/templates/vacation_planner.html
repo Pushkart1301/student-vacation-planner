@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vacation Planner</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&family=Inter:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  </head>
+  <body class="font-[Inter,Noto Sans,sans-serif] bg-white">
+    <div class="flex min-h-screen flex-col">
+      <header class="flex flex-wrap items-center justify-between border-b px-4 py-3 md:px-10">
+        <div class="flex items-center gap-4 text-black">
+          <div class="size-4">
+            <!-- Icon -->
+          </div>
+          <h2 class="text-lg font-bold">Study Planner</h2>
+        </div>
+        <div class="flex flex-wrap gap-4 text-sm font-medium">
+          <a href="#" class="hover:underline">Dashboard</a>
+          <a href="#" class="hover:underline">Calendar</a>
+          <a href="#" class="hover:underline">Tasks</a>
+          <a href="#" class="hover:underline">Settings</a>
+        </div>
+      </header>
+      <main class="px-4 py-5 w-full max-w-4xl mx-auto md:px-10">
+        <h1 class="text-3xl font-bold mb-6">Vacation Planner</h1>
+        <form id="vacationForm" class="mb-6 flex flex-wrap items-center gap-4">
+  <label for="threshold" class="text-base font-bold">Minimum Attendance Threshold (%)</label>
+  <input type="number" id="threshold" name="threshold" min="50" max="100" value="75" class="border p-2 rounded-md w-28" />
+
+  <label for="month" class="text-base font-bold">Select Month</label>
+  <select id="month" name="month" class="border p-2 rounded-md">
+<option value="07">July</option>
+<option value="08">August</option>
+<option value="09">September</option>
+<option value="10">October</option>
+<option value="11">November</option>
+<option value="12">December</option>
+<option value="01">January</option>
+<option value="02">February</option>
+<option value="03">March</option>
+<option value="04">April</option>
+<option value="05">May</option>
+<option value="06">June</option>
+
+
+  </select>
+
+  <button type="submit" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md">
+    Get Vacation Plan
+  </button>
+</form>
+
+        <div id="vacationResult" class="space-y-4"></div>
+      </main>
+
+    <script>
+      document.getElementById("vacationForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const threshold = parseFloat(document.getElementById("threshold").value);
+  const month = document.getElementById("month").value;
+
+  const res = await fetch("/vacation-planner", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ threshold, month })
+  });
+
+  const result = await res.json();
+  const container = document.getElementById("vacationResult");
+
+  if (!result || !result.suggested_range) {
+    container.innerHTML = `<p class='text-red-500'>No vacation could be suggested within your threshold.</p>`;
+    return;
+  }
+
+  // same rendering logic as before...
+});
+
+    </script>
+  </body>
+</html>
