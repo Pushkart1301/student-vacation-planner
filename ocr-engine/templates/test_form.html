@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Upload Academic Calendar</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
-                  url("{{ url_for('static', filename='bg.jpg') }}") no-repeat center center fixed;
-      background-size: cover;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle, rgba(6, 6, 43, 1) 0%, rgba(136, 9, 145, 1) 46%, rgba(0, 212, 255, 1) 100%);
+      background-size: 400% 400%;
+      animation: gradientBG 18s ease infinite;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -19,23 +19,40 @@
       overflow: hidden;
     }
 
-    .upload-container {
-      background: rgba(255, 255, 255, 0.85);
-      padding: 2.5rem 3rem;
-      border-radius: 16px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
-      max-width: 500px;
-      width: 90%;
-      text-align: center;
-      backdrop-filter: blur(8px);
-      animation: fadeIn 1s ease-in-out;
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
+    .glass {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+    }
+
+    .upload-container {
+  padding: 2.5rem 3rem;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.4); /* Darker glass contrast */
+  border: 2px solid rgba(255, 255, 255, 0.25); /* Visible border */
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 6px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  animation: fadeIn 1s ease-in-out;
+  color: white;
+}
+
+
     h2 {
-      color: #222;
       margin-bottom: 1.5rem;
       font-size: 1.75rem;
       animation: slideInTop 0.8s ease-out;
+      text-shadow: 0 0 8px rgba(255,255,255,0.3);
     }
 
     input[type="file"] {
@@ -46,15 +63,26 @@
       margin: 1.2rem 0;
       font-family: inherit;
       transition: box-shadow 0.3s ease;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    input[type="file"]::file-selector-button {
+      background: #ffffff22;
+      border: none;
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
     }
 
     input[type="file"]:hover {
-      box-shadow: 0 0 0 2px #007bff88;
+      box-shadow: 0 0 0 2px #00d4ff88;
     }
 
     button {
-      background-color: #007bff;
-      color: white;
+      background-color: #00d4ff;
+      color: #06062b;
       padding: 0.8rem 2rem;
       font-size: 1rem;
       border: none;
@@ -66,15 +94,15 @@
     }
 
     button:hover {
-      background-color: #0056b3;
+      background-color: #00aacc;
       transform: scale(1.05);
-      box-shadow: 0 0 12px #007bffcc;
+      box-shadow: 0 0 12px #00d4ffcc;
     }
 
     a.back-link {
       display: block;
       margin-top: 1.5rem;
-      color: #007bff;
+      color: #ffffffcc;
       text-decoration: none;
       font-size: 0.95rem;
       transition: all 0.3s ease;
@@ -112,9 +140,9 @@
   </style>
 </head>
 <body>
-  <div class="upload-container">
+  <div class="upload-container glass">
     <h2>📤 Upload Academic Calendar</h2>
-    <form action="/vacation-planner" method="POST" enctype="multipart/form-data">
+    <form action="/upload-calendar" method="POST" enctype="multipart/form-data">
       <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required />
       <br />
       <button type="submit">Upload & Extract</button>

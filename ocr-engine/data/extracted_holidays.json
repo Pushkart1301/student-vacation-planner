@@ -1,81 +1,92 @@
-{
-  "2025-01-01": "New Year's Day",
-  "2025-01-06": "Guru Gobind Singh Jayanti",
-  "2025-01-14": "Makar Sankranti",
-  "2025-01-14": "Pongal (Tamil Nadu, Kerala)",
-  "2025-01-14": "Hazrat Ali Jayanti (Uttar Pradesh)",
-  "2025-01-15": "Thiruvalluvar Day (Tamil Nadu)",
-  "2025-01-16": "Uzhavar Thirunal (Tamil Nadu)",
-  "2025-01-23": "Netaji Subhas Chandra Bose Jayanti (West Bengal, Odisha, Tripura, Jharkhand)",
-  "2025-01-26": "Republic Day",
-  "2025-02-02": "Vasant Panchami",
-  "2025-02-03": "Devnarayan Jayanti (Rajasthan)",
-  "2025-02-11": "Thai Poosam (Tamil Nadu)",
-  "2025-02-12": "Guru Ravidas Jayanti (Punjab, Himachal Pradesh, Haryana, Madhya Pradesh)",
-  "2025-02-14": "Shab-e-Barat (Bihar)",
-  "2025-02-19": "Chhatrapati Shivaji Maharaj Jayanti (Maharashtra)",
-  "2025-02-26": "Maha Shivaratri",
-  "2025-03-13": "Holika Dahan (Rajasthan)",
-  "2025-03-14": "Holi",
-  "2025-03-22": "Bihar Day (Bihar)",
-  "2025-03-30": "Ugadi (Andhra Pradesh, Telangana, Karnataka)",
-  "2025-03-30": "Gudi Padwa (Maharashtra)",
-  "2025-03-30": "Cheti Chand (Rajasthan, Maharashtra)",
-  "2025-03-30": "Telugu New Year (Tamil Nadu)",
-  "2025-03-31": "Eid-ul-Fitr",
-  "2025-04-05": "Samrat Ashoka Ashtami (Bihar)",
-  "2025-04-06": "Ram Navami",
-  "2025-04-10": "Mahavir Jayanti",
-  "2025-04-11": "Mahatma Jyotirao Phule Jayanti (Rajasthan)",
-  "2025-04-14": "Dr. B.R. Ambedkar Jayanti",
-  "2025-04-14": "Tamil New Year (Tamil Nadu)",
-  "2025-04-14": "Vishu (Kerala)",
-  "2025-04-18": "Good Friday",
-  "2025-04-20": "Easter Sunday",
-  "2025-04-23": "Veer Kunwar Singh Jayanti (Bihar)",
-  "2025-04-29": "Bhagvan Shree Parshuram Jayanti (Gujarat, Rajasthan)",
-  "2025-04-30": "Basava Jayanti (Karnataka)",
-  "2025-05-01": "May Day / Maharashtra Day (Maharashtra)",
-  "2025-05-06": "Janaki Navami (Bihar)",
-  "2025-05-08": "Guru Rabindranath Jayanti (West Bengal)",
-  "2025-05-12": "Buddha Purnima",
-  "2025-05-29": "Maharana Pratap Jayanti (Rajasthan)",
-  "2025-06-07": "Eid-ul-Zuha (Bakrid)",
-  "2025-06-11": "Sant Guru Kabir Jayanti (Punjab, Bihar)",
-  "2025-06-27": "Rath Yatra (Odisha, some parts of West Bengal)",
-  "2025-07-06": "Muharram",
-  "2025-08-09": "Raksha Bandhan",
-  "2025-08-15": "Independence Day",
-  "2025-08-15": "Parsi New Year (Gujarat, Maharashtra)",
-  "2025-08-16": "Janmashtami",
-  "2025-08-27": "Ganesh Chaturthi (Maharashtra, Karnataka)",
-  "2025-08-27": "Samvatsari (Chaturthi Paksha) (Gujarat - Jain Holiday)",
-  "2025-09-02": "Ramdev Jayanti (Rajasthan)",
-  "2025-09-05": "Milad-un-Nabi (Id-e-Milad)",
-  "2025-09-05": "Onam (Kerala)",
-  "2025-09-07": "Sree Narayana Guru Jayanti (Kerala)",
-  "2025-09-21": "Sree Narayana Guru Samadhi (Kerala)",
-  "2025-09-21": "Mahalaya Amavasye (West Bengal, Karnataka)",
-  "2025-09-22": "Navratra Sthapana / Ghatasthapana (Rajasthan, Kerala)",
-  "2025-09-29": "Maha Saptami (West Bengal)",
-  "2025-09-30": "Maha Ashtami (West Bengal)",
-  "2025-10-01": "Maha Navami",
-  "2025-10-01": "Ayutha Pooja (Tamil Nadu)",
-  "2025-10-02": "Mahatma Gandhi Jayanti",
-  "2025-10-02": "Dussehra (Vijaya Dashami)",
-  "2025-10-06": "Lakshmi Puja (West Bengal)",
-  "2025-10-07": "Maharishi Valmiki Jayanti",
-  "2025-10-17": "Karaka Chaturthi (Karva Chouth)",
-  "2025-10-20": "Diwali",
-  "2025-10-21": "Govardhan Puja",
-  "2025-10-22": "Vikram Samvat New Year Day (Gujarat)",
-  "2025-10-22": "Bhai Duj",
-  "2025-10-23": "Chhath Puja (Sayan Arghya) (Bihar, Jharkhand, Uttar Pradesh)",
-  "2025-10-28": "Chhath Puja (Bihar, Jharkhand, Uttar Pradesh)",
-  "2025-10-31": "Sardar Vallabhbhai Patel's Birthday (Gujarat)",
-  "2025-10-31": "Kali Puja (West Bengal)",
-  "2025-11-01": "Kannada Rajyotsava (Karnataka)",
-  "2025-11-05": "Guru Nanak Jayanti",
-  "2025-11-08": "Kanakadasa Jayanti (Karnataka)",
-  "2025-12-25": "Christmas Day"
-}
+[
+  {
+    "date": "15 August 2024",
+    "event": "Independence Day",
+    "weekday": "Thursday"
+  },
+  {
+    "date": "26 August 2024",
+    "event": "Janmashtami",
+    "weekday": "Monday"
+  },
+  {
+    "date": "07 September 2024",
+    "event": "Ganesh Chaturthi",
+    "weekday": "Sunday"
+  },
+  {
+    "date": "02 October 2024",
+    "event": "Mahatma Gandhi Jayanthi",
+    "weekday": "Wednesday"
+  },
+  {
+    "date": "11 October 2024",
+    "event": "Maha Ashtami",
+    "weekday": "Friday"
+  },
+  {
+    "date": "12 October 2024",
+    "event": "Dussehra",
+    "weekday": "Saturday"
+  },
+  {
+    "date": "01 November 2024",
+    "event": "Diwali",
+    "weekday": "Friday"
+  },
+  {
+    "date": "15 November 2024",
+    "event": "Guru Nanak Jayanthi",
+    "weekday": "Friday"
+  },
+  {
+    "date": "25 December 2024",
+    "event": "Christmas",
+    "weekday": "Wednesday"
+  },
+  {
+    "date": "14 January 2025",
+    "event": "Makar Sankranti",
+    "weekday": "Tuesday"
+  },
+  {
+    "date": "26 January 2025",
+    "event": "Republic Day",
+    "weekday": "Sunday"
+  },
+  {
+    "date": "26 February 2025",
+    "event": "Maha Shivaratri",
+    "weekday": "Wednesday"
+  },
+  {
+    "date": "14 March 2025",
+    "event": "Holi",
+    "weekday": "Friday"
+  },
+  {
+    "date": "30 March 2025",
+    "event": "Ugadi",
+    "weekday": "Sunday"
+  },
+  {
+    "date": "31 March 2025",
+    "event": "Eid",
+    "weekday": "Monday"
+  },
+  {
+    "date": "06 April 2025",
+    "event": "Rama Navami",
+    "weekday": "Sunday"
+  },
+  {
+    "date": "14 April 2025",
+    "event": "Ambedkar Jayanthi",
+    "weekday": "Monday"
+  },
+  {
+    "date": "18 April 2025",
+    "event": "Good Friday",
+    "weekday": "Friday"
+  }
+]

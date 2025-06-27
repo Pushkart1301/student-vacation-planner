@@ -12,51 +12,17 @@ from pdf2image import convert_from_bytes
 import pdfplumber
 import io
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-
+try:
+    from groq_module_private import extract_holidays_from_groq
+except ImportError:
+    from groq_module import extract_holidays_from_groq
 
 app = Flask(__name__)
 CORS(app)
 
-
-
 # Update your static holiday planner
 HOLIDAYS = []  # Will be filled by uploaded calendar
 USER_THRESHOLD = 75
-
-# @app.route('/vacation-planner', methods=['GET', 'POST'])
-# def vacation_planner():
-#     global HOLIDAYS, USER_THRESHOLD
-
-#     if request.method == 'POST':
-#         threshold = int(request.form.get("threshold", 75))
-#         USER_THRESHOLD = threshold
-
-#         file = request.files.get("file")
-#         if file:
-#             filename = secure_filename(file.filename)
-#             file_bytes = file.read()
-#             extracted_text = ""
-
-#             if filename.endswith(".pdf"):
-#                 with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-#                     for page in pdf.pages:
-#                         extracted_text += page.extract_text() or ""
-#                 if not extracted_text.strip():
-#                     images = convert_from_bytes(file_bytes)
-#                     for img in images:
-#                         extracted_text += pytesseract.image_to_string(img)
-#             else:
-#                 img = Image.open(io.BytesIO(file_bytes))
-#                 extracted_text = pytesseract.image_to_string(img)
-
-#             from groq_module import extract_holidays_from_groq  # ← Use your actual function
-#             HOLIDAYS = extract_holidays_from_groq(extracted_text)
-
-#         return render_template("holiday_results.html", holidays=HOLIDAYS, threshold=USER_THRESHOLD)
-
-#     return render_template("holiday_results.html", holidays=HOLIDAYS, threshold=USER_THRESHOLD)
-
-
 
 # Mock timetable data parsed from your uploaded PDF (can be updated dynamically later)
 timetable = {
@@ -91,6 +57,31 @@ def save_lecture_schedule():
         return jsonify({"status": "success", "message": "Lecture schedule saved successfully."})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+    
+
+from datetime import datetime
+
+@app.route('/holiday-results')
+def show_extracted_holidays():
+    with open("data/extracted_holidays.json") as f:
+        holiday_data = json.load(f)
+
+    if isinstance(holiday_data, dict):
+        # Old format — convert to list
+        holidays = []
+        for date_str, event in holiday_data.items():
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            holidays.append({
+                "date": date_str,
+                "event": event,
+                "weekday": date_obj.strftime("%A")
+            })
+    else:
+        holidays = holiday_data  # Use as is
+
+    return render_template("holiday_results.html", holidays=holidays)
+
+
 
 @app.route('/api/lectures-for-date/<date>', methods=['GET'])
 def lectures_for_date(date):
@@ -246,28 +237,79 @@ def attendance_summary_page():
 
 
 
-@app.route("/vacation-planner", methods=["GET", "POST"])
-def vacation_planner():
-    if request.method == "GET":
-        return render_template("vacation_planner.html")
+@app.route('/vacation-planner', methods=["GET"])
+def vacation_modal_page():
+    return render_template("vacation_planner.html")  # <-- Tailwind-based UI page
 
-    print("[INFO] /vacation-planner POST called")
+@app.route("/api/vacation-plan", methods=["POST"])
+def vacation_planner():
+    print("[INFO] /api/vacation-plan POST called")
+    if not request.is_json:
+        return jsonify({"error": "Invalid content type. Must be application/json"}), 400
 
     try:
         data = request.get_json()
-        print("[INFO] Data received:", data)
-
-        from vacation_logic import generate_vacation_plan_response
-        response_data = generate_vacation_plan_response(data)
-        print("[INFO] Response data:", response_data)
-
-        return jsonify(response_data)
-
+        print("[INFO] JSON received:", data)
     except Exception as e:
-        print("[ERROR in /vacation-planner POST]:", str(e))
-        import traceback
-        traceback.print_exc()  # print full error
-        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+        print("[ERROR] JSON decode failed:", e)
+        return jsonify({"error": "Invalid JSON format"}), 400
+
+    from vacation_logic import generate_vacation_plan_response
+    result = generate_vacation_plan_response(data)
+    return jsonify(result)
+
+
+    # Check content type manually
+    if not request.is_json:
+        print("[ERROR] Invalid content type:", request.content_type)
+        return jsonify({"error": "Invalid content type. Must be application/json"}), 400
+
+    try:
+        data = request.get_json()
+        print("[INFO] JSON received:", data)
+    except Exception as e:
+        print("[ERROR] Invalid JSON:", e)
+        return jsonify({"error": "Invalid JSON format", "details": str(e)}), 400
+
+    from vacation_logic import generate_vacation_plan_response
+    response_data = generate_vacation_plan_response(data)
+    return jsonify(response_data)
+
+@app.route('/upload-calendar', methods=["POST"])
+def handle_calendar_upload():
+    file = request.files.get("file")
+    if not file:
+        return "No file uploaded", 400
+
+    filename = secure_filename(file.filename)
+    file_bytes = file.read()
+
+    # OCR PDF
+    if filename.lower().endswith(".pdf"):
+        try:
+            images = convert_from_bytes(file_bytes)
+            extracted_text = ""
+            for img in images:
+                extracted_text += pytesseract.image_to_string(img)
+        except:
+            return "PDF processing failed", 500
+    else:
+        # OCR Image
+        try:
+            image = Image.open(io.BytesIO(file_bytes))
+            extracted_text = pytesseract.image_to_string(image)
+        except:
+            return "Image processing failed", 500
+
+    # 🔍 Use AI/Regex module to extract holidays
+    from groq_module import extract_holidays_from_groq
+    holiday_dict = extract_holidays_from_groq(extracted_text)
+
+    # 💾 Save to file
+    with open("data/extracted_holidays.json", "w") as f:
+        json.dump(holiday_dict, f, indent=2)
+
+    return redirect("/holiday-results")
 
 
 
