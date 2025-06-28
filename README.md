@@ -71,7 +71,7 @@ Pull requests are welcome! If you'd like to improve features or fix bugs, feel f
 This project is open-source under the MIT License.
 
 💡 Pro Tip
-----------s
+----------
 
 Keep your attendance updated daily for the most accurate vacation planning results!
 
