@@ -38,7 +38,7 @@ The Student Vacation Planner helps students make informed vacation decisions by 
 - Add your Groq API key inside `.env`:
 GROQ_API_KEY=your_api_key_here
 
-6. Run the app ( app.py )
+6. Run the application ( app.py )
   
 8. ![image](https://github.com/user-attachments/assets/6f64ca77-4874-42e4-b0c0-25baa62f93df)
 
