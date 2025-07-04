@@ -75,4 +75,4 @@ This project is open-source under the MIT License.
 
 Keep your attendance updated daily for the most accurate vacation planning results!
 
-
+⚠️ Note: I've already included a working API key in the project just for your ease of testing SVP. If you have your own Groq API key, you can replace it in the groq_module.py file or update the .env file accordingly.
