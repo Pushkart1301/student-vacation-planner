@@ -116,7 +116,7 @@
         return;
       }
 
-      let html = `<h2 class='text-xl font-bold text-green-300'>✅ Suggested Vacation: ${result.suggested_range[0]} to ${result.suggested_range[1]}</h2>`;
+      let html = `<h2 class='text-xl font-bold text-green-300'> Suggested Vacation: ${result.suggested_range[0]} to ${result.suggested_range[1]}</h2>`;
 
       if (Array.isArray(result.days)) {
         html += '<ul class="list-disc ml-6">';
@@ -142,7 +142,7 @@
       resultContainer.innerHTML = html;
 
     } catch (err) {
-      resultContainer.innerHTML = `<p class="text-red-400">❌ Unexpected error: ${err.message}</p>`;
+      resultContainer.innerHTML = `<p class="text-red-400"> Unexpected error: ${err.message}</p>`;
     }
   });
 </script>

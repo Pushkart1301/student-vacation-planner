@@ -75,7 +75,7 @@ def show_extracted_holidays():
 
     # ✅ If it's an error dict, show message instead of crashing
     if isinstance(holiday_data, dict) and "error" in holiday_data:
-        return f"❌ Failed to extract holidays: {holiday_data['error']}", 500
+        return f" Failed to extract holidays: {holiday_data['error']}", 500
 
     holidays = []
     for h in holiday_data:
@@ -158,11 +158,11 @@ if not os.path.exists("data"):
 def save_subjects():
     data = request.get_json()
     
-    # ✅ Save selected subjects
+    #  Save selected subjects
     with open("data/selected_subjects.json", "w") as f:
         json.dump(data, f, indent=2)
     
-    # ✅ Reset lecture schedule to match new subjects
+    #  Reset lecture schedule to match new subjects
     lecture_schedule_path = "data/lecture_schedule.json"
     if os.path.exists(lecture_schedule_path):
         os.remove(lecture_schedule_path)  # Delete old schedule
@@ -236,14 +236,14 @@ def attendance_summary_page():
     attendance_data_path = "data/attendance_data.json"
     subject_stats = {}
 
-    # ✅ Load attendance data from disk freshly
+    #  Load attendance data from disk freshly
     if os.path.exists(attendance_data_path):
         with open(attendance_data_path) as f:
             attendance_data = json.load(f)
     else:
         attendance_data = {}
 
-    # ✅ Summarize
+    # Summarize
     for date, records in attendance_data.items():
         for subject, status in records.items():
             if not subject or subject.strip().isdigit():
@@ -289,7 +289,7 @@ def vacation_planner():
         with open("data/attendance_data.json") as f:
             raw_attendance = json.load(f)
 
-        # ✅ Subject-wise summary
+        #  Subject-wise summary
         summary = {}
         for date, records in raw_attendance.items():
             for subject, status in records.items():
@@ -347,11 +347,11 @@ def handle_calendar_upload():
         except:
             return "Image processing failed", 500
 
-    # 🔍 Use AI/Regex module to extract holidays
+    #  Use AI/Regex module to extract holidays
     from groq_module import extract_holidays_from_groq
     holiday_dict = extract_holidays_from_groq(extracted_text)
 
-    # 💾 Save to file
+    #  Save to file
     with open("data/extracted_holidays.json", "w") as f:
         json.dump(holiday_dict, f, indent=2)
 
