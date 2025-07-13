@@ -1,7 +1,7 @@
-# app.py
 from flask import Flask, request, jsonify, render_template, redirect, url_for
-
 from flask import Flask, request, jsonify, render_template
+from vacation_logic import calculate_subject_wise_summary
+from groq_module import ( extract_holidays_from_groq, get_vacation_plan_from_groq, ask_groq_chatbot)
 from flask_cors import CORS
 import os
 import json
@@ -61,32 +61,44 @@ def save_lecture_schedule():
 
 from datetime import datetime
 
+
 @app.route('/holiday-results')
 def show_extracted_holidays():
-    with open("data/extracted_holidays.json") as f:
+    holidays_path = "data/extracted_holidays.json"
+    if not os.path.exists(holidays_path):
+        return "No holiday data found. Please upload your academic calendar.", 404
+
+    with open(holidays_path) as f:
         holiday_data = json.load(f)
 
-    if isinstance(holiday_data, dict):
-        # Old format — convert to list
-        holidays = []
-        for date_str, event in holiday_data.items():
-            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+    # ✅ If it's an error dict, show message instead of crashing
+    if isinstance(holiday_data, dict) and "error" in holiday_data:
+        return f"❌ Failed to extract holidays: {holiday_data['error']}", 500
+
+    holidays = []
+    for h in holiday_data:
+        if not isinstance(h, dict):
+            print("[WARNING] Skipping non-dict entry:", h)
+            continue
+        try:
+            date_obj = datetime.strptime(h["date"], "%d %B %Y")
             holidays.append({
-                "date": date_str,
-                "event": event,
-                "weekday": date_obj.strftime("%A")
+                "date": h["date"],
+                "event": h["event"],
+                "weekday": h.get("weekday", date_obj.strftime("%A"))
             })
-    else:
-        holidays = holiday_data  # Use as is
+        except Exception as e:
+            print("[ERROR] Skipping invalid holiday entry:", h, "| Error:", str(e))
+
+    holidays.sort(key=lambda x: datetime.strptime(x["date"], "%d %B %Y"))
 
     return render_template("holiday_results.html", holidays=holidays)
-
 
 
 @app.route('/api/lectures-for-date/<date>', methods=['GET'])
 def lectures_for_date(date):
     try:
-        with open("data/lecture_schedule.json") as f:
+        with open("data/lecture_mapping.json") as f:
             lecture_schedule = json.load(f)
 
         weekday = datetime.strptime(date, "%Y-%m-%d").strftime("%A")
@@ -96,6 +108,14 @@ def lectures_for_date(date):
     except Exception as e:
         return jsonify({"error": str(e)})
 
+@app.route('/get-lecture-schedule')
+def get_lecture_schedule():
+    try:
+        with open("data/lecture_schedule.json") as f:
+            schedule = json.load(f)
+        return jsonify(schedule)
+    except FileNotFoundError:
+        return jsonify({})
 
 @app.route('/map-lectures', methods=['GET', 'POST'])
 def map_lectures():
@@ -131,12 +151,22 @@ def map_lectures():
 selected_subjects_file = "data/selected_subjects.json"  # make sure this folder exists
 if not os.path.exists("data"):
     os.makedirs("data")
+
 @app.route('/save-subjects', methods=['POST'])
 def save_subjects():
     data = request.get_json()
+    
+    # ✅ Save selected subjects
     with open("data/selected_subjects.json", "w") as f:
         json.dump(data, f, indent=2)
+    
+    # ✅ Reset lecture schedule to match new subjects
+    lecture_schedule_path = "data/lecture_schedule.json"
+    if os.path.exists(lecture_schedule_path):
+        os.remove(lecture_schedule_path)  # Delete old schedule
+
     return jsonify({"status": "success"})
+
 
 @app.route('/get-selected-subjects')
 def get_selected_subjects():
@@ -160,7 +190,7 @@ def attendance_ui():
         with open("data/lecture_schedule.json") as f:
             lecture_schedule = json.load(f)
     except FileNotFoundError:
-        lecture_schedule = {}  # fallback if file doesn't exist
+        lecture_schedule = {}
 
     return render_template("attendance.html", lecture_schedule=lecture_schedule)
 
@@ -243,37 +273,51 @@ def vacation_modal_page():
 
 @app.route("/api/vacation-plan", methods=["POST"])
 def vacation_planner():
-    print("[INFO] /api/vacation-plan POST called")
+    from vacation_logic import generate_vacation_plan_response
+    from groq_module import get_vacation_plan_from_groq
+
     if not request.is_json:
-        return jsonify({"error": "Invalid content type. Must be application/json"}), 400
+        return jsonify({"error": "Invalid content type"}), 400
+
+    data = request.get_json()
+    threshold = int(data.get("threshold", 75))
+    preferred_month = data.get("month")
 
     try:
-        data = request.get_json()
-        print("[INFO] JSON received:", data)
+        with open("data/attendance_data.json") as f:
+            raw_attendance = json.load(f)
+
+        # ✅ Subject-wise summary
+        summary = {}
+        for date, records in raw_attendance.items():
+            for subject, status in records.items():
+                if subject not in summary:
+                    summary[subject] = {"present": 0, "absent": 0}
+                if status == "P":
+                    summary[subject]["present"] += 1
+                elif status == "A":
+                    summary[subject]["absent"] += 1
+
+        with open("data/extracted_holidays.json") as f:
+            holidays_raw = json.load(f)
+            holidays = list(holidays_raw.keys()) if isinstance(holidays_raw, dict) else []
+
+        groq_result = get_vacation_plan_from_groq(
+            summary,
+            holidays,
+            "2025-06-01", "2025-11-30",
+            threshold,
+            preferred_month
+        )
+
+        if groq_result and "suggested_range" in groq_result:
+            return jsonify(groq_result)
+
     except Exception as e:
-        print("[ERROR] JSON decode failed:", e)
-        return jsonify({"error": "Invalid JSON format"}), 400
+        print("[Fallback to local logic triggered]", e)
 
-    from vacation_logic import generate_vacation_plan_response
-    result = generate_vacation_plan_response(data)
-    return jsonify(result)
+    return jsonify(generate_vacation_plan_response(data))
 
-
-    # Check content type manually
-    if not request.is_json:
-        print("[ERROR] Invalid content type:", request.content_type)
-        return jsonify({"error": "Invalid content type. Must be application/json"}), 400
-
-    try:
-        data = request.get_json()
-        print("[INFO] JSON received:", data)
-    except Exception as e:
-        print("[ERROR] Invalid JSON:", e)
-        return jsonify({"error": "Invalid JSON format", "details": str(e)}), 400
-
-    from vacation_logic import generate_vacation_plan_response
-    response_data = generate_vacation_plan_response(data)
-    return jsonify(response_data)
 
 @app.route('/upload-calendar', methods=["POST"])
 def handle_calendar_upload():
@@ -311,6 +355,32 @@ def handle_calendar_upload():
 
     return redirect("/holiday-results")
 
+@app.route("/api/chat-query", methods=["POST"])
+def chat_query():
+    data = request.get_json()
+    question = data.get("query", "")
+
+    # Load attendance
+    with open("data/attendance_data.json") as f:
+        attendance = json.load(f)
+
+    # Load selected subjects
+    with open("data/selected_subjects.json") as f:
+        sub = json.load(f)
+        subjects = sub.get("selected", []) + sub.get("custom", [])
+
+    # Load holidays
+    with open("data/extracted_holidays.json") as f:
+        holidays = json.load(f)
+
+    sem_start = datetime(2025, 6, 1)
+    sem_end = datetime(2025, 11, 30)
+
+    summary = calculate_subject_wise_summary(attendance, subjects, sem_start, sem_end)
+
+    response = ask_groq_chatbot(question, summary, holidays, subjects, sem_start.strftime("%Y-%m-%d"), sem_end.strftime("%Y-%m-%d"))
+
+    return jsonify({"response": response})
 
 
 if __name__ == '__main__':

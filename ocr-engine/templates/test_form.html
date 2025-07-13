@@ -17,6 +17,7 @@
       align-items: center;
       height: 100vh;
       overflow: hidden;
+      position: relative; /* Needed for particle overlay */
     }
 
     @keyframes gradientBG {
@@ -33,20 +34,21 @@
     }
 
     .upload-container {
-  padding: 2.5rem 3rem;
-  border-radius: 16px;
-  max-width: 500px;
-  width: 90%;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.4); /* Darker glass contrast */
-  border: 2px solid rgba(255, 255, 255, 0.25); /* Visible border */
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 6px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  animation: fadeIn 1s ease-in-out;
-  color: white;
-}
-
+      padding: 2.5rem 3rem;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.4); /* Darker glass contrast */
+      border: 2px solid rgba(255, 255, 255, 0.25); /* Visible border */
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 6px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      animation: fadeIn 1s ease-in-out;
+      color: white;
+      position: relative;
+      z-index: 2; /* Bring container above particles */
+    }
 
     h2 {
       margin-bottom: 1.5rem;
@@ -113,6 +115,95 @@
       transform: translateY(-2px);
     }
 
+    /* Loading Overlay & Morphing Blob Styles */
+    .loader-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7); /* Darker overlay for better contrast */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border-radius: 16px;
+      z-index: 10;
+      transition: opacity 0.4s ease-in-out;
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .loader-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .blob-loader {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #00d4ff, #880991); /* Gradient for the blob */
+      border-radius: 50%;
+      animation: morph-blob 4s infinite ease-in-out alternate,
+                 scale-blob 2s infinite ease-in-out alternate; /* Added scaling animation */
+      filter: blur(5px); /* Soften the edges */
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 0 5px rgba(0,0,0,0.5);
+    }
+
+    /* Clip-path for morphing effect */
+    @keyframes morph-blob {
+      0% { border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%; transform: rotate(0deg); }
+      25% { border-radius: 60% 40% 70% 30% / 40% 60% 30% 70%; transform: rotate(45deg); }
+      50% { border-radius: 70% 30% 60% 40% / 70% 30% 40% 60%; transform: rotate(90deg); }
+      75% { border-radius: 40% 60% 30% 70% / 60% 40% 70% 30%; transform: rotate(135deg); }
+      100% { border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%; transform: rotate(180deg); }
+    }
+
+    @keyframes scale-blob {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+
+    .loading-text {
+      margin-top: 25px; /* More space for blob */
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: white;
+      text-shadow: 0 0 8px rgba(255,255,255,0.4);
+      animation: pulseText 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseText {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+
+    /* Particle Background - A bit more complex, but worth it! */
+    .particle {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 50%;
+        opacity: 0;
+        animation: floatAndFade 15s infinite ease-in-out forwards;
+        z-index: 1; /* Below the main container */
+    }
+
+    @keyframes floatAndFade {
+        0% { transform: translateY(0) scale(0); opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 0.5; }
+        100% { transform: translateY(-100vh) scale(1); opacity: 0; }
+    }
+
     /* Animations */
     @keyframes fadeIn {
       from { opacity: 0; transform: scale(0.95); }
@@ -136,18 +227,62 @@
       h2 {
         font-size: 1.5rem;
       }
+      .blob-loader {
+          width: 80px;
+          height: 80px;
+          font-size: 1.2rem;
+      }
+      .loading-text {
+          font-size: 1rem;
+      }
     }
   </style>
 </head>
 <body>
   <div class="upload-container glass">
     <h2>📤 Upload Academic Calendar</h2>
-    <form action="/upload-calendar" method="POST" enctype="multipart/form-data">
+    <form id="uploadForm" action="/upload-calendar" method="POST" enctype="multipart/form-data">
       <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required />
       <br />
       <button type="submit">Upload & Extract</button>
     </form>
     <a class="back-link" href="/">← Back to Dashboard</a>
+
+    <div id="loaderOverlay" class="loader-overlay">
+      <div class="blob-loader">✨</div>
+      <div class="loading-text">Uploading and Processing...</div>
+    </div>
   </div>
+
+  <script>
+    const uploadForm = document.getElementById('uploadForm');
+    const loaderOverlay = document.getElementById('loaderOverlay');
+    const blobLoader = document.querySelector('.blob-loader');
+    const loadingText = document.querySelector('.loading-text');
+
+    uploadForm.addEventListener('submit', function(event) {
+      const fileInput = uploadForm.querySelector('input[type="file"]');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Please select a file to upload.');
+        event.preventDefault();
+        return;
+      }
+
+      loaderOverlay.classList.add('active');
+    });
+
+    // Optional: Hide loader if user navigates back via browser history
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted) {
+        loaderOverlay.classList.remove('active');
+        // Reset blob/text if they were changed due to a previous error
+        blobLoader.textContent = '✨';
+        blobLoader.style.animation = ''; // Re-enable animation
+        blobLoader.style.filter = 'blur(5px)';
+        blobLoader.style.backgroundColor = ''; // Reset background color
+      }
+    });
+
+  </script>
 </body>
 </html>

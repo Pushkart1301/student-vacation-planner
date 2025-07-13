@@ -85,57 +85,67 @@
   </main>
 
   <script>
-    document.getElementById("submitBtn").addEventListener("click", async () => {
-      const resultContainer = document.getElementById("vacationResult");
-      resultContainer.innerHTML = `<p class="text-gray-300">🌀 Calculating optimal vacation plan...</p>`;
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const resultContainer = document.getElementById("vacationResult");
+    resultContainer.innerHTML = `<p class="text-gray-300">🌀 Calculating optimal vacation plan...</p>`;
 
-      const threshold = parseInt(document.getElementById("threshold").value);
-      const month = document.getElementById("month").value;
+    const threshold = parseInt(document.getElementById("threshold").value);
+    const month = document.getElementById("month").value;
 
-      try {
-        const res = await fetch("/api/vacation-plan", {
-          method: "POST",
-          headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ threshold, month })
-        });
+    try {
+      const res = await fetch("/api/vacation-plan", {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ threshold, month })
+      });
 
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
 
-        const result = await res.json();
+      const result = await res.json();
 
-        if (result.error) {
-          resultContainer.innerHTML = `<p class="text-red-300 font-semibold">❌ ${result.error}</p>`;
-          return;
-        }
+      if (result.error) {
+        resultContainer.innerHTML = `<p class="text-red-300 font-semibold">❌ ${result.error}</p>`;
+        return;
+      }
 
-        if (!result || !result.suggested_range) {
-          resultContainer.innerHTML = `<p class="text-yellow-300">⚠️ No vacation could be suggested within your threshold.</p>`;
-          return;
-        }
+      if (!result || !result.suggested_range) {
+        resultContainer.innerHTML = `<p class="text-yellow-300">⚠️ No vacation could be suggested within your threshold.</p>`;
+        return;
+      }
 
-        let html = `<h2 class='text-xl font-bold text-green-300'>✅ Suggested Vacation: ${result.suggested_range[0]} to ${result.suggested_range[1]}</h2>`;
+      let html = `<h2 class='text-xl font-bold text-green-300'>✅ Suggested Vacation: ${result.suggested_range[0]} to ${result.suggested_range[1]}</h2>`;
+
+      if (Array.isArray(result.days)) {
         html += '<ul class="list-disc ml-6">';
         result.days.forEach(day => {
           html += `<li>${day.date} - ${day.type}</li>`;
         });
         html += '</ul>';
+      } else {
+        html += `<p class="text-yellow-300">⚠️ No detailed day-wise vacation data received.</p>`;
+      }
 
+      if (result.post_attendance_projection) {
         html += `<h3 class='text-lg font-semibold mt-6 text-blue-200'>📊 Projected Attendance:</h3>`;
         html += '<ul class="list-disc ml-6">';
         for (const [subject, percent] of Object.entries(result.post_attendance_projection)) {
           html += `<li>${subject}: ${percent.toFixed(2)}%</li>`;
         }
         html += '</ul>';
-
-        resultContainer.innerHTML = html;
-
-      } catch (err) {
-        resultContainer.innerHTML = `<p class="text-red-400">❌ Unexpected error: ${err.message}</p>`;
+      } else {
+        html += `<p class="text-yellow-300">⚠️ No projected attendance data available.</p>`;
       }
-    });
-  </script>
+
+      resultContainer.innerHTML = html;
+
+    } catch (err) {
+      resultContainer.innerHTML = `<p class="text-red-400">❌ Unexpected error: ${err.message}</p>`;
+    }
+  });
+</script>
+
 </body>
 </html>

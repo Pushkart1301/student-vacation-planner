@@ -36,6 +36,38 @@
     }
   </style>
 </head>
+<!-- AI Assistant Floating Button -->
+<button id="openChatBtn"
+  class="fixed bottom-6 right-6 z-50
+         w-16 h-16 rounded-full flex items-center justify-center text-3xl font-bold
+         bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-2xl
+         hover:from-pink-600 hover:to-purple-600 hover:scale-110
+         transition-all duration-300 ease-in-out
+         animated-chat-button"
+  aria-label="Open AI Chat">
+  🤖
+</button>
+
+<!-- AI Assistant Modal -->
+<div id="chatModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
+  <div class="bg-white text-black w-full max-w-md rounded-xl shadow-lg p-6 relative">
+    <button onclick="closeChatModal()"
+      class="absolute top-3 right-3 text-gray-600 hover:text-red-500 text-xl font-bold">&times;</button>
+    <h2 class="text-xl font-semibold mb-2">💬 Ask AI Assistant</h2>
+    <p class="text-sm text-gray-500 mb-3">Ask anything about your attendance or vacation planning!</p>
+    
+    <textarea id="chatInput" rows="3"
+      class="w-full border rounded-md p-2 focus:ring focus:ring-blue-300 resize-none"
+      placeholder="e.g., Can I take a leave next Friday?"></textarea>
+    
+    <button onclick="sendChatQuery()"
+      class="mt-3 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 w-full">
+      🚀 Ask
+    </button>
+
+    <div id="chatReply" class="mt-4 text-sm text-gray-800 whitespace-pre-wrap hidden"></div>
+  </div>
+</div>
 
 <body class="min-h-screen text-white">
   <!-- Header -->
@@ -115,6 +147,23 @@
       </div>
     </div>
   </div>
+<!-- Startup Info Modal -->
+<div id="infoPopup" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+  <div class="bg-white text-black rounded-lg p-6 max-w-md w-full shadow-lg relative">
+    <button onclick="closeInfoPopup()" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-lg font-bold">&times;</button>
+    <h3 class="text-xl font-bold mb-3 text-purple-800">🎯 Ready to Plan Smart & Chill Hard?</h3>
+    <p class="text-sm text-gray-800 mb-3">
+      Welcome to your personal student assistant. Here's how to make the most of this app 👇
+    </p>
+    <ul class="list-disc list-inside text-sm space-y-2 text-gray-700">
+      <li><strong>📚Step 1:</strong> Select your subjects from the Subjects page.</li>
+      <li><strong>🗓️ Step 2:</strong> Head to Attendance Tracker and map your weekly lectures.</li>
+      <li><strong>📘 Step 3:</strong> Upload your academic calendar to auto-extract all holidays 🎉</li>
+      <li><strong>🌴 Step 4:</strong> Visit Plan My Vacation — get smart vacation suggestions that won’t mess with your 75% attendance!</li>
+    </ul>
+    <p class="mt-4 text-sm text-blue-700 font-semibold">💡 Pro Tip: The smarter you track, the longer you chill 😎</p>
+  </div>
+</div>
 
   <!-- Scripts -->
   <script>
@@ -153,6 +202,55 @@
       closeModal();
       alert("✅ Profile updated successfully!");
     }
+    function closeInfoPopup() {
+    const modal = document.getElementById("infoPopup");
+    if (modal) {
+      modal.style.display = "none";
+    }
+  }
+
+
+  const openChatBtn = document.getElementById('openChatBtn');
+  const chatModal = document.getElementById('chatModal');
+  const chatInput = document.getElementById('chatInput');
+  const chatReply = document.getElementById('chatReply');
+
+  openChatBtn.onclick = () => {
+    chatModal.classList.remove('hidden');
+    chatInput.focus();
+  };
+
+  function closeChatModal() {
+    chatModal.classList.add('hidden');
+    chatInput.value = '';
+    chatReply.textContent = '';
+    chatReply.classList.add('hidden');
+  }
+
+  async function sendChatQuery() {
+    const question = chatInput.value.trim();
+    if (!question) return alert("Please enter a question.");
+
+    chatReply.textContent = "⏳ Thinking...";
+    chatReply.classList.remove('hidden');
+
+    try {
+      const res = await fetch('/api/chat-query', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+      const data = await res.json();
+      if (data.reply) {
+        chatReply.textContent = data.reply;
+      } else {
+        chatReply.textContent = "⚠️ Could not get a proper answer.";
+      }
+    } catch (err) {
+      chatReply.textContent = "❌ Error contacting AI assistant.";
+    }
+  }
+
   </script>
 </body>
 </html>

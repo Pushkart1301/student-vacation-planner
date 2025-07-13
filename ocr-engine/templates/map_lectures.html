@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- Head -->
 <head>
+  <meta charset="UTF-8" />
   <title>Lecture Mapper</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<!-- Body -->
 <body>
   <div class="container mx-auto p-4">
     <h2 class="text-2xl font-bold mb-4">🗓️ Map Your Weekly Lecture Schedule</h2>
+
+    <!-- Dynamic Time Slot Adder -->
+    <div class="mb-4 flex gap-2 items-center">
+      <input id="newTimeSlot" type="text" placeholder="e.g. 9:00 - 10:00" class="border p-2 rounded w-60" />
+      <button onclick="addTimeSlot()" class="bg-blue-600 text-white px-4 py-2 rounded">➕ Add Time Slot</button>
+    </div>
+
     <form id="schedule-form">
       <table class="table-auto w-full mb-6 border">
         <thead>
@@ -20,28 +26,22 @@
             <th class="border px-4 py-2">Wednesday</th>
             <th class="border px-4 py-2">Thursday</th>
             <th class="border px-4 py-2">Friday</th>
+            <th class="border px-4 py-2">Saturday</th>
           </tr>
         </thead>
-        <tbody id="schedule-body">
-          <!-- Rows will be inserted here by JS -->
-        </tbody>
+        <tbody id="schedule-body"></tbody>
       </table>
       <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">💾 Save Schedule</button>
     </form>
   </div>
 
   <script>
-    const timeSlots = [
-      "10:45 - 11:45",
-      "11:45 - 12:45",
-      "12:45 - 1:45",
-      "1:45 - 2:45",
-      "2:45 - 3:30",
-      "3:30 - 4:30"
-    ];
-    const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const timeSlots = new Set();
+    let subjects = [];
+    let savedSchedule = {};
 
-    const createDropdown = (day, time, subjects) => {
+    function createDropdown(day, time) {
       const select = document.createElement("select");
       select.name = `schedule[${day}][${time}]`;
       select.className = "border rounded px-2 py-1";
@@ -58,39 +58,74 @@
         select.appendChild(opt);
       });
 
-      return select;
-    };
+      // Preselect if saved value exists
+      if (savedSchedule[day] && savedSchedule[day][time]) {
+        select.value = savedSchedule[day][time];
+      }
 
+      return select;
+    }
+
+    function addTimeSlotFromLoad(time) {
+      if (timeSlots.has(time)) return;
+
+      timeSlots.add(time);
+      const tbody = document.getElementById("schedule-body");
+
+      const row = document.createElement("tr");
+
+      const timeCell = document.createElement("td");
+      timeCell.className = "border px-4 py-2 font-semibold";
+      timeCell.innerText = time;
+      row.appendChild(timeCell);
+
+      weekdays.forEach(day => {
+        const cell = document.createElement("td");
+        cell.className = "border px-4 py-2";
+        const select = createDropdown(day, time);
+        cell.appendChild(select);
+        row.appendChild(cell);
+      });
+
+      tbody.appendChild(row);
+    }
+
+    function addTimeSlot() {
+      const input = document.getElementById("newTimeSlot");
+      const time = input.value.trim();
+      if (!time || timeSlots.has(time)) return;
+
+      addTimeSlotFromLoad(time);
+      input.value = "";
+    }
+
+    // Fetch selected subjects
     fetch("/get-selected-subjects")
       .then(res => res.json())
       .then(data => {
-        const subjects = data.selected || [];
-        const tbody = document.getElementById("schedule-body");
+        subjects = data.selected || [];
 
-        timeSlots.forEach(time => {
-          const row = document.createElement("tr");
+        // Then fetch existing saved lecture schedule
+        return fetch("/get-lecture-schedule");
+      })
+      .then(res => res.json())
+      .then(schedule => {
+        savedSchedule = schedule;
 
-          const timeCell = document.createElement("td");
-          timeCell.className = "border px-4 py-2 font-semibold";
-          timeCell.innerText = time;
-          row.appendChild(timeCell);
-
-          weekdays.forEach(day => {
-            const cell = document.createElement("td");
-            cell.className = "border px-4 py-2";
-            const select = createDropdown(day, time, subjects);
-            cell.appendChild(select);
-            row.appendChild(cell);
-          });
-
-          tbody.appendChild(row);
-        });
+        // Pre-add all saved time slots
+        const added = new Set();
+        for (const day in savedSchedule) {
+          for (const time in savedSchedule[day]) {
+            if (!added.has(time)) {
+              addTimeSlotFromLoad(time);
+              added.add(time);
+            }
+          }
+        }
       });
 
-    // Save logic
     document.getElementById("schedule-form").addEventListener("submit", function (e) {
       e.preventDefault();
-
       const formData = new FormData(e.target);
       const schedule = {};
 
@@ -113,12 +148,10 @@
       })
         .then(res => res.json())
         .then(data => {
-          alert("Lecture schedule saved!");
+          alert("✅ Lecture schedule saved!");
         })
         .catch(err => console.error("Error:", err));
     });
   </script>
 </body>
-
-
 </html>

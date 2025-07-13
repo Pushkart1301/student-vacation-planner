@@ -25,9 +25,11 @@
   </div>
   <table id="attendance-table"></table>
   <div class="stats" id="attendance-stats"></div>
+  <div class="mt-6 text-center">
+    <a href="/map-lectures" class="inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition">Update Lecture Mapping</a>
+  </div>
 </div>
 
-<!-- Modal -->
 <div id="lectureModal" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%);
   background:white; padding:20px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.3); z-index:1000;">
   <h3 class="font-bold">Mark Attendance for <span id="modalDateText"></span></h3>
@@ -92,7 +94,7 @@
     const weekday = new Date(dateKey).toLocaleDateString('en-US', { weekday: 'long' });
     const schedule = lectureSchedule[weekday];
     if (!schedule || Object.values(schedule).every(sub => sub === "")) {
-      alert("No lectures scheduled.");
+      alert("No lectures scheduled for this day.");
       return;
     }
 
@@ -104,42 +106,43 @@
 
     Object.entries(schedule).forEach(([slot, subject]) => {
       if (!subject) return;
-      const prev = attendanceData[dateKey]?.[subject] || "";
+      const prev = attendanceData[dateKey]?.[subject] || "–";
+
+      const btnId = `att-${subject.replace(/\s+/g, "-")}-${slot.replace(/\s+/g, "")}`;
       list.innerHTML += `
-        <label>${slot} - ${subject}:
-          <select id="att-${subject}">
-            <option value="">--</option>
-            <option value="P" ${prev === "P" ? "selected" : ""}>P</option>
-            <option value="A" ${prev === "A" ? "selected" : ""}>A</option>
-          </select>
-        </label><br/>
+        <div class="mb-2 flex items-center justify-between">
+          <span class="mr-2 font-medium">${slot} - ${subject}</span>
+          <button id="${btnId}" class="px-3 py-1 rounded border"
+            data-subject="${subject}"
+            data-slot="${slot}"
+            onclick="toggleAttendance('${btnId}')">
+            ${prev}
+          </button>
+        </div>
       `;
+      setTimeout(() => updateAttendanceButton(btnId), 10);
     });
 
     document.getElementById("lectureModal").style.display = "block";
   }
 
   function saveLectureAttendance() {
-    const dateKey = document.getElementById("selectedDate").value;
-    const weekday = new Date(dateKey).toLocaleDateString('en-US', { weekday: 'long' });
-    const schedule = lectureSchedule[weekday];
+    const date = document.getElementById("selectedDate").value;
+    const lectureButtons = document.querySelectorAll("#lectureList button[data-subject]");
+    const updates = {};
 
-    if (!attendanceData[dateKey]) attendanceData[dateKey] = {};
-    Object.entries(schedule).forEach(([_, subject]) => {
-      if (!subject) return;
-      const status = document.getElementById(`att-${subject}`).value;
-      if (status) {
-        attendanceData[dateKey][subject] = status;
-
-        fetch("/api/mark-attendance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ date: dateKey, subject, status })
-        });
+    lectureButtons.forEach(btn => {
+      const subject = btn.getAttribute("data-subject");
+      const status = btn.textContent.trim();
+      if (status === "P" || status === "A") {
+        updates[subject] = status;
       }
     });
 
+    attendanceData[date] = { ...attendanceData[date], ...updates };
     localStorage.setItem("attendanceData", JSON.stringify(attendanceData));
+
+  
     closeModal();
     renderCalendar(currentMonth, currentYear);
   }
@@ -151,46 +154,90 @@
   function updateCellUI(cell, dateKey) {
     cell.classList.remove("present", "absent");
     const subj = attendanceData[dateKey];
+    const originalDayText = cell.innerText.split("\n")[0];
+
     if (subj) {
-      const hasP = Object.values(subj).includes("P");
-      const hasA = Object.values(subj).includes("A");
+      const statuses = Object.values(subj);
+      const hasP = statuses.includes("P");
+      const hasA = statuses.includes("A");
 
       if (hasP && hasA) {
         cell.classList.add("present");
-        cell.innerHTML = `${cell.innerText.split("\n")[0]}<br>P/A`;
+        cell.innerHTML = `${originalDayText}<br>P/A`;
       } else if (hasP) {
         cell.classList.add("present");
-        cell.innerHTML = `${cell.innerText.split("\n")[0]}<br>P`;
+        cell.innerHTML = `${originalDayText}<br>P`;
       } else if (hasA) {
         cell.classList.add("absent");
-        cell.innerHTML = `${cell.innerText.split("\n")[0]}<br>A`;
+        cell.innerHTML = `${originalDayText}<br>A`;
+      } else {
+        cell.innerHTML = originalDayText;
       }
+    } else {
+       cell.innerHTML = originalDayText;
     }
   }
 
   function calculateStats(month, year) {
-    let present = 0, absent = 0, workingDays = 0;
+    let totalLectures = 0;
+    let totalPresent = 0;
+    let totalAbsent = 0;
+
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
-      const weekday = date.getDay();
-      if (weekday === 0 || weekday === 6) continue;
-      workingDays++;
-
+      const weekdayName = date.toLocaleDateString('en-US', { weekday: 'long' });
       const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const entries = Object.values(attendanceData[dateKey] || {});
-      if (entries.includes("P")) present++;
-      if (entries.includes("A")) absent++;
+
+      const dailySchedule = lectureSchedule[weekdayName];
+      if (dailySchedule) {
+        const scheduledSubjects = Object.values(dailySchedule).filter(subject => subject !== "");
+        totalLectures += scheduledSubjects.length;
+
+        const dailyAttendance = attendanceData[dateKey] || {};
+        scheduledSubjects.forEach(subject => {
+          if (dailyAttendance[subject] === "P") totalPresent++;
+          else if (dailyAttendance[subject] === "A") totalAbsent++;
+        });
+      }
     }
 
-    const percent = workingDays ? ((present / workingDays) * 100).toFixed(1) : 0;
-    stats.innerText = `Present: ${present}, Absent: ${absent}, Working Days: ${workingDays}, Attendance: ${percent}%`;
+    const overallAttendancePercentage = totalLectures ? ((totalPresent / totalLectures) * 100).toFixed(1) : 0;
+    stats.innerText = `Total Lectures: ${totalLectures}, Present: ${totalPresent}, Absent: ${totalAbsent}, Overall Attendance: ${overallAttendancePercentage}%`;
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     renderCalendar(currentMonth, currentYear);
   });
+
+  function toggleAttendance(id) {
+    const btn = document.getElementById(id);
+    const current = btn.textContent.trim();
+
+    let next = "";
+    if (current === "P") next = "A";
+    else if (current === "A") next = "–";
+    else next = "P";
+
+    btn.textContent = next;
+    updateAttendanceButton(id);
+  }
+
+  function updateAttendanceButton(id) {
+    const btn = document.getElementById(id);
+    const status = btn.textContent.trim();
+
+    btn.classList.remove("bg-green-500", "bg-red-500", "bg-gray-300", "text-white", "text-black");
+
+    if (status === "P") {
+      btn.classList.add("bg-green-500", "text-white");
+    } else if (status === "A") {
+      btn.classList.add("bg-red-500", "text-white");
+    } else {
+      btn.classList.add("bg-gray-300", "text-black");
+    }
+  }
 </script>
 
 </body>
