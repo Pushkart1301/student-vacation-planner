@@ -1,3 +1,7 @@
+![MIT License](https://img.shields.io/badge/license-MIT-green)
+![Python](https://img.shields.io/badge/python-3.10+-blue)
+![Flask](https://img.shields.io/badge/backend-Flask-orange)
+====================================
 🎒 Student Vacation Planner (SVP)
 ================================
 
