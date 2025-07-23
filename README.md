@@ -54,6 +54,12 @@ GROQ_API_KEY=your_api_key_here
 3. Mark Attendance: Head to `/attendance`, click a date, and mark Present/Absent for each subject.
 4. Check Summary: `/attendance-summary` gives a live subject-wise attendance breakdown.
 5. Plan Vacation: Use `/vacation-planner` to generate valid vacation slots based on your attendance & threshold.
+![Black White Professional Minimal Brand Logo_page-0001](https://github.com/user-attachments/assets/8dca6501-db10-4eb6-808b-7e819c6c2038)
+![Black White Professional Minimal Brand Logo_page-0002](https://github.com/user-attachments/assets/db3fb98c-2af2-458c-ae08-ea21e0bd18a7)
+![Black White Professional Minimal Brand Logo_page-0003](https://github.com/user-attachments/assets/56655583-d3ef-4480-b9e0-3503f39a2924)
+
+
+
 
 🤖 Tech Stack
 -------------
